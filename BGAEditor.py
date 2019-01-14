@@ -22,33 +22,27 @@ def Main():
 def BGAEdit(BGAProfilePath,isCampaign):
   FileList = os.listdir(BGAProfilePath)
   ProfileList = []
-
   for File in FileList: #Only include valid saved games
     if (File.find("Meta") == -1 and File.find("CrossCampaign") == -1):
       ProfileList.append(File)
-
   while True: #Saved game selection input loop
     ProfileCounter = 1
     for Profile in ProfileList: #Display list of games
       print(ProfileCounter,": ",ProfileList[ProfileCounter-1].replace('.sav',''),sep='')
       ProfileCounter += 1
-
     EditProfile = int(input("\nSelect Profile: ")); print("")
     if (EditProfile < 1 or EditProfile >= ProfileCounter):
       print("Invalid Selection - Try Again\n")
       continue
     else:
       break
-
   with open(os.path.join(BGAProfilePath,ProfileList[EditProfile-1]),"rb+") as Profile:
     ProfileMM = mmap.mmap(Profile.fileno(), 0)
-
   while True: #Edit mode input loop
     print("1: Edit Admiral")
     print("2: Edit Ships")
     print("3: Go Back")
     EditMode = input("\nSelect Mode: "); print("")
-
     if (EditMode == "1"):
       EditAdmiral(ProfileMM,ProfileList[EditProfile-1].replace('.sav',''),isCampaign)
       continue
@@ -109,7 +103,6 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
         ProfileMM.seek(SpaceMarineChapter+40)
         SpaceMarineChapter = int.from_bytes(ProfileMM.read(4),sys.byteorder)
         SpaceMarineChapter = SpaceMarineChapterValues[SpaceMarineChapter]
-
     #If the Admiral has never fought a battle, there will be no XPTotal field at all.
     #If the Admiral just leveled and has no XP toward the next level there will be no CurrentXP field.
     #In order to manipulate the level, these fields must be inserted into the profile. This code handles that.
@@ -136,9 +129,7 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
       AdmiralTotalXP = b'\x08\x00\x00\x00\x58\x50\x54\x6F\x74\x61\x6C\x00\x0C\x00\x00\x00\x49\x6E\x74\x50\x72\x6F\x70\x65\x72\x74\x79\x00\x04\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
       InsertIntoMM(ProfileMM,AdmiralTotalXP,XPStart)
       AdmiralTotalXP = 0
-
     ProfileMM.seek(0)
-
     print("Admiral Properties\n")
     print("(Name):",AdmiralName)
     print("(Faction):",AdmiralFaction)
@@ -160,7 +151,6 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
     print("MAXADMIRAL!: EscortUpgrades + all ship slots unlocked + level 8 and 100k renown")
     print("Back: Go Back")
     EditProperty = input("\nSelect Property: "); print("")
-
     if (EditProperty == "Level"):
       AdmiralLevelNew = int(input("Enter new level: ")); print("")
       EditLevel(ProfileMM,1,AdmiralLevelNew,0)
@@ -186,7 +176,7 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
       AddShipToAdmiral(ProfileMM,AdmiralFaction,ShipClass)
     elif (EditProperty == "EscortUpgrades"):
       EscortUpgradesNew = 3
-      while True:
+      while True: 
         EscortShip = ProfileMM.find(b'\x45\x53\x43\x4F\x52\x54',ProfileMM.tell()) #ESCORT
         if (EscortShip != -1):
           ProfileMM.seek(ProfileMM.find(b'\x53\x6C\x6F\x74\x73\x4D\x61\x78',EscortShip)+33) #SlotsMax
@@ -213,7 +203,7 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
       ProfileMM.write(AdmiralPropertyNew.to_bytes(4,sys.byteorder))
       ProfileMM.seek(0)
       AdmiralPropertyNew = 3
-      while True:
+      while True: 
         EscortShip = ProfileMM.find(b'\x45\x53\x43\x4F\x52\x54',ProfileMM.tell()) #ESCORT
         if (EscortShip != -1):
           ProfileMM.seek(ProfileMM.find(b'\x53\x6C\x6F\x74\x73\x4D\x61\x78',EscortShip)+33) #SlotsMax
@@ -225,10 +215,8 @@ def EditAdmiral(ProfileMM, AdmiralName, isCampaign):
     else:
       print("Invalid Selection - Try Again\n")
       continue
-
   ProfileMM.flush()
   return
-
 def EditShips(ProfileMM):
   ProfileMM.seek(0) #Reset MM file position in case this function gets called in the middle of execution
   ships = FindShips(ProfileMM)
@@ -258,7 +246,6 @@ def EditShips(ProfileMM):
       continue
     else:
       break
-
   while True: #Ship property edit input loop. See Readme for explanation of why individual crew skill code is commented out
     ProfileMM.seek(ShipPos+len(EditShip)+57)
     StrLength = int.from_bytes(ProfileMM.read(4), sys.byteorder)
@@ -293,7 +280,6 @@ def EditShips(ProfileMM):
     print("Back: Go Back")
     EditProperty = input("\nSelect Property: "); print("")
     ProfileMM.seek(ShipPos)
-
     if (EditProperty == "Level"):
       ShipLevelNew = int(input("Enter new level: ")); print("")
       EditLevel(ProfileMM,0,ShipLevelNew,0)
